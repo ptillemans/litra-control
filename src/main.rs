@@ -88,7 +88,7 @@ fn light_on(device: &HidDevice) -> Result<()> {
 
 fn light_off(device: &HidDevice) -> Result<()> {
     println!("Turn Litra off.");
-    send_command(device, 0x1c, 0x0100)
+    send_command(device, 0x1c, 0x0000)
         .context("Turning light off")
 }
 
