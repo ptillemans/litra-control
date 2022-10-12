@@ -72,7 +72,7 @@ pub fn light_on(config: &LitraConfig) -> Result<()> {
 
 pub fn light_off(config: &LitraConfig) -> Result<()> {
     println!("Turn Litra off.");
-    send_command(config, 0x1c, 0x0100)
+    send_command(config, 0x1c, 0x0000)
         .context("Turning light off")
 }
 
