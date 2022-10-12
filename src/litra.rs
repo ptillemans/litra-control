@@ -1,6 +1,7 @@
 use std::ffi::CString;
-use hidapi::{DeviceInfo, HidApi};
+use std::time::Duration;
 use anyhow::{Result, Context};
+use rusb::{Device, UsbContext};
 use crate::LitraConfig;
 
 const SUPPORTED_PRODUCTS: [VidPid; 1] = [VidPid{ vendor_id: 0x046d, product_id: 0xC900} ];
@@ -20,48 +21,65 @@ impl VidPid {
 
 }
 
-fn is_litra_device(device: &DeviceInfo) -> bool {
-    let vid_pid = VidPid::new(device.vendor_id(), device.product_id());
+fn is_litra_device_rusb<T:UsbContext>(device: &Device<T>) -> bool {
+    let descriptor = device.device_descriptor().unwrap();
+    let vid_pid = VidPid::new(descriptor.vendor_id(), descriptor.product_id());
 
-    println!("Checking device {:?}", vid_pid );
     SUPPORTED_PRODUCTS.contains(&vid_pid)
 }
 
 pub fn find_device_path() -> Result<String>{
+    rusb::set_log_level(rusb::LogLevel::Debug);
+    for device in rusb::devices().unwrap().iter()
+        .filter(is_litra_device_rusb) {
 
-    let api = HidApi::new().context("Creating HidApi.")?;
-    for device in api.device_list() {
-        println!("{:04x}:{:04x} {:?} -> {:?}",
-                 device.vendor_id(), device.product_id(),
-                 device.product_string(), device.path());
+        let device_desc = device.device_descriptor().unwrap();
+
+        println!("Bus {:03} Device {:03} ID {:04x}:{:04x}",
+                 device.bus_number(),
+                 device.address(),
+                 device_desc.vendor_id(),
+                 device_desc.product_id());
+
+        for n in 0..device_desc.num_configurations() as u8 {
+            let config_desc = device.config_descriptor(n).unwrap();
+            println!("Configuration {} -> {} interfaces ", config_desc.number(), config_desc.num_interfaces());
+            for interface in config_desc.interfaces() {
+                println!("   Interface {} ", interface.number());
+                for if_desc in interface.descriptors() {
+
+                    println!("      number {} endpoints: {} setting number: {}", if_desc.interface_number(), if_desc.num_endpoints(), if_desc.setting_number());
+
+                    for endpoint in if_desc.endpoint_descriptors() {
+                        println!("        endpoint address {} number {} direction {:?} type {:?}", endpoint.address(), endpoint.number(), endpoint.direction(), endpoint.transfer_type() )
+                    }
+                }
+            }
+        }
     }
-    let devices = api
-        .device_list()
-        .filter(|dev| is_litra_device(dev));
-
-
-    // experience shows it is the second device
-    // TODO: find better way to find the device(s) we need as this will not work with
-    // multiple lamps
-    let device = devices.last().context("Getting last litra device")?;
-    device.path().to_str().context("Converting Litra device path")
-        .map(|s| String::from(s))
+    Ok("foo".to_string())
 }
 
 fn send_command(config: &LitraConfig, command: u8, argument: u16) -> Result<()> {
-    //let mut api = HidApi::new_without_enumerate().context("Creating HidApi.")?;
-    let api = HidApi::new_without_enumerate().context("Creating HidApi.")?;
-    let path = (config.path.clone()).context("Need USB path to send commands")?;
-    let hid_path = CString::new(path).context("Convert path for FFI call")?;
-    let device = api.open_path(&hid_path)
-        .context("Opening connection to Litra")?;
-
+    let mut buf = [0; 20];
     let low_byte:u8  = (argument & 0xff) as u8;
     let high_byte:u8  = (argument >> 8 & 0xff) as u8;
-    let buf = [0x11, 0xff, 0x04, command, high_byte, low_byte];
-    device.write(&buf)
-        .map(|_| ())
-        .context(format!("Sending command {:02x}", command))
+    let msg = [0x11, 0xff, 0x04, command, high_byte, low_byte];
+    buf[..msg.len()].copy_from_slice(&msg);
+
+    let vid = config.vendor_id;
+    let pid = config.product_id;
+    let mut handle = rusb::open_device_with_vid_pid(vid, pid).context("Open handle to USB device")?;
+    handle.set_auto_detach_kernel_driver(true).context("Set autodetach kernel driver")?;
+    let timeout = Duration::from_millis(100);
+    handle.reset().context("Resetting device")?;
+    handle.claim_interface(0).context("Claim interface")?;
+    // handle.set_alternate_setting(0, 0).context("Set alternate setting")?;
+    handle.write_interrupt(2, &buf, timeout)
+        .context("Writing to device")?;
+    handle.read_interrupt(0x82, &mut buf, timeout)
+        .context("Reading response from device")?;
+    handle.release_interface(0).context("Release interface")
 }
 
 pub fn light_on(config: &LitraConfig) -> Result<()> {

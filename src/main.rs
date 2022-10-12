@@ -11,14 +11,15 @@ mod litra;
 
 fn main() -> Result<()> {
 
-    let config: LitraConfig = Config::builder()
+    let config = Config::builder()
+        .set_default("vendor_id", "1133")?
+        .set_default("product_id", "51456")?
         .add_source(
             config::Environment::with_prefix("LITRA")
         )
-        .build()
-        .context("Reading configuration")
-        .and_then(|cfg| cfg.try_deserialize().context("Deserialize configuration"))
-        .context("Parsing configuration")?;
+        .build()?;
+    let config: LitraConfig =
+        config.try_deserialize()?;
 
     println!("Configuration: {:?}", config);
 

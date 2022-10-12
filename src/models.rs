@@ -1,8 +1,10 @@
 use clap::{Parser, Subcommand};
+use serde::Deserialize;
 
-#[derive(Debug, Default, serde_derive::Deserialize, PartialEq, Eq)]
+#[derive(Debug, Default, Deserialize, PartialEq, Eq)]
 pub struct LitraConfig {
-    pub path: Option<String>
+    pub vendor_id : u16,
+    pub product_id : u16
 }
 
 #[derive(Parser, Debug)]
