@@ -1,4 +1,4 @@
-use anyhow::{Result, Context};
+use anyhow::Result;
 use config::Config;
 use clap::Parser;
 
@@ -32,9 +32,20 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Some(Commands::Init) => {
-            let path = find_device_path(&config).context("Find device path")?;
-            println!("Path : {}", path);
-            println!("Tip: set the environment variable LITRA_PATH to this value to avoid enumeration of devices.");
+            println!("Scanning USB devices. This might take a few seconds.");
+            match find_device_path(&config) {
+                Ok(paths) => {
+                    for path in paths {
+                        println!("Path : {}", path);
+                    }
+                    println!("Set the environment variable LITRA_PATH to one of these values to avoid enumeration of devices.");
+                    println!("Unfortunately it is hard to specify which one is the right one as it depends on the platform.");
+                    println!("On Windows there are 2 per light and the second one is the one you want.");
+                }
+                Err(err) => {
+                    println!("Error during searching for Litra devices : {:?}", err)
+                }
+            }
             Ok(())
         },
         Some(Commands::On) => {

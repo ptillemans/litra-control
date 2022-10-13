@@ -3,28 +3,34 @@ use anyhow::{Result, Context};
 use hidapi::HidApi;
 use crate::LitraConfig;
 
-pub fn find_device_path(config: &LitraConfig) -> Result<String> {
-    HidApi::new().context("Creating HidApi.")?
+pub fn find_device_path(config: &LitraConfig) -> Result<Vec<String>> {
+    Ok(HidApi::new().context("Creating HidApi.")?
         .device_list()
         .filter(|dev|
             dev.product_id() == config.product_id
                 && dev.vendor_id() == config.vendor_id
         )
         .map(|device| {
-            device.path().to_str().unwrap().to_string().clone()
+            device.path().to_str().unwrap().to_string()
         })
-        .next()
-        .context("Fetching Litra devices.")
+        .collect())
 }
 
 const BUF_LEN: usize = 20;
 
 fn send_buffer(config: &LitraConfig, buf: &mut [u8; BUF_LEN]) -> Result<()> {
-    let api = HidApi::new().context("Creating HidApi.")?;
-    let path = CString::new(config.path.clone().into_bytes())?;
-    api.open_path(&path).context("Opening device")?
-        .write(buf).context("writing buffer")
+    let api = HidApi::new_without_enumerate().context("Creating HidApi.")?;
+    let path = config.path.clone();
+    let hid_path = CString::new(path).context("Convert path for FFI call")?;
+    let device = api.open_path(&hid_path)
+        .context("Opening connection to Litra")?;
+    device.write(buf).context("writing buffer")
         .map(|n| println!("Wrote {} bytes", n))
+    // let path = CString::new(config.path.clone().into_bytes())?;
+    // HidApi::new_without_enumerate().context("Creating HidApi.")?
+    //     .open_path(&path).context(format!("Opening device {:?}", path))?
+    //     .write(buf).context("writing buffer")
+    //     .map(|n| println!("Wrote {} bytes", n))
 }
 
 fn send_command(config: &LitraConfig, command: u8, argument: u16) -> Result<()> {
