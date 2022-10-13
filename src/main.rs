@@ -14,6 +14,7 @@ fn main() -> Result<()> {
     let config = Config::builder()
         .set_default("vendor_id", "1133")?
         .set_default("product_id", "51456")?
+        .set_default("path", "1-4:1.0")?
         .add_source(
             config::Environment::with_prefix("LITRA")
         )
@@ -31,7 +32,7 @@ fn main() -> Result<()> {
 
     match &cli.command {
         Some(Commands::Init) => {
-            let path = find_device_path().context("Find device path")?;
+            let path = find_device_path(&config).context("Find device path")?;
             println!("Path : {}", path);
             println!("Tip: set the environment variable LITRA_PATH to this value to avoid enumeration of devices.");
             Ok(())

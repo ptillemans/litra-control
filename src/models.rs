@@ -4,7 +4,8 @@ use serde::Deserialize;
 #[derive(Debug, Default, Deserialize, PartialEq, Eq)]
 pub struct LitraConfig {
     pub vendor_id : u16,
-    pub product_id : u16
+    pub product_id : u16,
+    pub path: String,
 }
 
 #[derive(Parser, Debug)]

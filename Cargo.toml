@@ -11,5 +11,4 @@ anyhow = "1.0.65"
 clap = { version = "4.0.13", features = ["derive"] }
 config = "0.13.2"
 serde = { version = "1.0.145", features = ["derive"] }
-rusb = "0.9.1"
 serde-hex = "0.1.0"
