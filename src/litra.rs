@@ -22,9 +22,16 @@ const BUF_LEN: usize = 20;
 fn send_buffer(config: &LitraConfig, buf: &mut [u8; BUF_LEN]) -> Result<()> {
     let api = HidApi::new().context("Creating HidApi.")?;
     let path = CString::new(config.path.clone().into_bytes())?;
-    api.open_path(&path).context("Opening device")?
-        .write(buf).context("writing buffer")
-        .map(|n| println!("Wrote {} bytes", n))
+
+    for device in api.device_list()
+        .filter(|dev| dev.vendor_id() == config.vendor_id && dev.product_id() == config.product_id) {
+        println!("turning on device {:?}", device.path());
+        let device = device.open_device(&api)?;
+        let _ = device
+            .write(buf).context("writing buffer")
+            .map(|n| println!("Wrote {} bytes", n));
+    };
+    Ok(())
 }
 
 fn send_command(config: &LitraConfig, command: u8, argument: u16) -> Result<()> {
