@@ -18,11 +18,19 @@ pub fn find_device_path(config: &LitraConfig) -> Result<Vec<String>> {
 
 const BUF_LEN: usize = 20;
 
+fn get_api() -> Result<HidApi> {
+    if cfg!(windows) {
+        // enumerating takes too long on Windows and opening direct paths works
+        HidApi::new_without_enumerate().context("Creating HidApi.")
+    } else {
+        // opening direct paths without enumeration does not work on linux
+        HidApi::new().context("Creating HidApi.")
+    }
+}
 fn send_buffer(config: &LitraConfig, buf: &mut [u8; BUF_LEN]) -> Result<()> {
-    let api = HidApi::new_without_enumerate().context("Creating HidApi.")?;
     let path = config.path.clone();
     let hid_path = CString::new(path).context("Convert path for FFI call")?;
-    let device = api.open_path(&hid_path)
+    let device = get_api()?.open_path(&hid_path)
         .context(format!("Opening connection to Litra {:?}", hid_path))?;
     device.write(buf).context("writing buffer")
         .map(|n| println!("Wrote {} bytes", n))

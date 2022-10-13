@@ -11,10 +11,12 @@ mod litra;
 
 fn main() -> Result<()> {
 
+    let cli : Cli = Cli::parse();
+
     let config = Config::builder()
         .set_default("vendor_id", "1133")?
         .set_default("product_id", "51456")?
-        .set_default("path", "1-4:1.0")?
+        .set_default("path", cli.path.unwrap_or("1-4:1.0".to_string()))?
         .add_source(
             config::Environment::with_prefix("LITRA")
         )
@@ -23,12 +25,6 @@ fn main() -> Result<()> {
         config.try_deserialize()?;
 
     println!("Configuration: {:?}", config);
-
-    let cli : Cli = Cli::parse();
-
-    if let Some(path) = cli.path.as_deref() {
-        println!("USB Device path = {}", path)
-    }
 
     match &cli.command {
         Some(Commands::Init) => {
