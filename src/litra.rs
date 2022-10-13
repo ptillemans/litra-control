@@ -23,7 +23,7 @@ fn send_buffer(config: &LitraConfig, buf: &mut [u8; BUF_LEN]) -> Result<()> {
     let path = config.path.clone();
     let hid_path = CString::new(path).context("Convert path for FFI call")?;
     let device = api.open_path(&hid_path)
-        .context("Opening connection to Litra")?;
+        .context(format!("Opening connection to Litra {:?}", hid_path))?;
     device.write(buf).context("writing buffer")
         .map(|n| println!("Wrote {} bytes", n))
     // let path = CString::new(config.path.clone().into_bytes())?;
