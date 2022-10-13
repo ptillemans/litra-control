@@ -34,11 +34,6 @@ fn send_buffer(config: &LitraConfig, buf: &mut [u8; BUF_LEN]) -> Result<()> {
         .context(format!("Opening connection to Litra {:?}", hid_path))?;
     device.write(buf).context("writing buffer")
         .map(|n| println!("Wrote {} bytes", n))
-    // let path = CString::new(config.path.clone().into_bytes())?;
-    // HidApi::new_without_enumerate().context("Creating HidApi.")?
-    //     .open_path(&path).context(format!("Opening device {:?}", path))?
-    //     .write(buf).context("writing buffer")
-    //     .map(|n| println!("Wrote {} bytes", n))
 }
 
 fn send_command(config: &LitraConfig, command: u8, argument: u16) -> Result<()> {
