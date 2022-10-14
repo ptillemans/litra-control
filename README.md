@@ -39,8 +39,10 @@ Since no ready-made solution fell in my lap, and deploying what I found would be
 _project_ so good to clarify requirements.
 
 I want:
+- to control the light with a keyboard shortcut
 - it to be a simple command-line app, e.g. `litra-control on`
 - it has to work on Linux, Windows (and Mac eventually, I gave mine to my daughter)
+- it has to be consistent in Lin/Win/Mac and posh/bash/zsh (which rules out shell scripts)
 - it has to be able to live in *~/.local/bin* as I do not want to fiddle with my PATH variable
 - it has to have minimal dependencies and not break when Python updates
 - it should be able to keep working for years without surprises
@@ -51,6 +53,7 @@ This leads me to some design choices
 - it needs a good argument parser library (not a problem, ubiquitous now)
 - it needs USB/HID access (this could be tricky due to quality differences)
 - use environment variables for configuration to avoid hunting files
+- it needs to have a meaningful name so I can remember what it does when I clean my *bin*.
 
 Go would be ideal to quickly build this simple thing as it has great text UI libraries and arg
 parsers, however I did not want to deal with the gcc dependency (or with the C compilation 
@@ -113,8 +116,52 @@ Sets the brightness as a percentage.
 
 Sets the temperature in Kelvin.
 
+# Integration with the Desktop 
+
+I already run [AutoHotKey](https://www.autohotkey.com/) to remap keys on my 
+keyboard so that is the obvious choice to control the lamp with a keystroke.
+
+    ;; Control the Litra Glow with Win-Alt-L
+    LitraState = 0
+    #!l::
+    if (LitraState = 0) {
+        Run, "C:\Users\%A_UserName%\.local\bin\litra-control.exe" on, , Hide
+        LitraState = 1
+    } else {
+        Run, "C:\Users\%A_UserName%\.local\bin\litra-control.exe" off, , Hide
+        LitraState = 0
+    }
+    return
+
+I made it a toggle button in the *AutoHotKey* because it made most sense to me :
+when using the keyboard I expect interactivity, but when running commands I find
+it easier to reason if they always have the same postcondition and not have hidden
+state. (I am probably overthinking this.)
 
 
+# Integration in the terminal
 
+While I prefer a meaningful name for the command, I do prefer a short form for
+typing on the terminal. 
 
+I added to my *~/.zshrc* (should be the same for *~/.bashrc* )
+
+    # Map the litra-control script to an easy to type alias
+    alias lc=litra-control
+
+(on reflection I should have added that to *~/.profile* as that is shared between
+bash and zsh, but let's keep that for future improvement. And yes, I realize I could
+have fixed that faster that documenting this here.)
+
+In the WSL2 terminal I need to make the command appear on the path (I do not have
+my windows bin folder exposed in my Linux environment):
+
+    $ ln -s ~/win/.local/bin/litra-control.exe ~/.local/bin/litra-control
+
+(*~/win is a symbolic link to my windows home folder, e.g. /mnt/c/Users/<UserName>)
+
+For powershell I added the following lines to *$PROFILE* :
+
+    # Assign litra-control to alias lc
+    New-Item -Path Alias:lc -Value c:\Users\PeterTillemans\.local\bin\litra-control.exe
 
