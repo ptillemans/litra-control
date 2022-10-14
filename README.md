@@ -70,6 +70,38 @@ To keep it simple
     cargo build --release
     cp target/release/litra-command ~/.local/bin
 
+## Linux permissions
+
+To access the device we need to tell the OS to put the right permissions on the device to allow
+access without using *sudo* because that would be not simple to use.
+
+For Arch and similar distro embracing the systemd wya we can add a
+file */etc/udev/rules.d/71-litra-glow* with the content
+
+    SUBSYSTEMS=="usb", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c900", MODE:="0660", TAG+="uaccess"
+
+to allow user access to the file.
+
+For Ubuntu and other debian based system the group *plugdev* is used to give people access to USG
+and other hotplug devices:
+
+   SUBSYSTEMS=="usb", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c900", MODE:="0660", GROUP="plugdev"
+
+Of course you have to be in the *plugdev* group for this to work, if not:
+
+   sudo usermod <yourlogin> -a -G plugdev
+
+and logout/login again to make it stick.
+
+Not recommended but when all else fails :
+
+   SUBSYSTEMS=="usb", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="c900", MODE:="0666"
+
+This is insecure and with the current energy prices you do not want hackers to turnn on your video 
+light sneakily. On the other hand al other USB manufacturers seem to prefer this approach as I find
+many of these rules installed for other devices. In any case I recommend you figure out the right way
+instead of the easy/insecure way.
+
 # Usage
 
 ## Preparation
