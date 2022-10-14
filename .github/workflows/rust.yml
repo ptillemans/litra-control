@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: install dependencies
+    - run: apt-get update -y && apt-get install -y lib-usb
     - name: Build
       run: cargo build --verbose --release
     - name: Run tests
