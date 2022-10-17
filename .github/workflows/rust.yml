@@ -21,16 +21,7 @@ jobs:
       run: sudo apt-get update -y && sudo apt-get install libusb-1.0-0-dev
     - name: Run tests
       run: cargo test --verbose
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v3.1.0
-      with:
-        # Artifact name
-        name: litra-control-linux-amd64
-        # A file, directory or wildcard pattern that describes what to upload
-        path: target/release/litra-control
-        # The desired behavior if no files are found using the provided path.
-        if-no-files-found: error
-        retention-days: 90
+   
     
   release:
     name: Create Release
@@ -60,7 +51,9 @@ jobs:
           - macOS-latest
     steps:
     - uses: actions/checkout@v3
-   
+    - name: install dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: sudo apt-get update -y && sudo apt-get install libusb-1.0-0-dev
     - name: Build
       run: cargo build --verbose --release
     - name: Upload a Build Artifact
