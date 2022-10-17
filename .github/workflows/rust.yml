@@ -67,8 +67,8 @@ jobs:
         asset_path: target/release/litra-control.exe
         asset_name: ${{ matrix.os }}.exe
         asset_content_type: application/octet
-    - name: Upload assets
-      if: matrix.os == 'windows-latest'
+    - name: Upload assets unix
+      if: matrix.os != 'windows-latest'
       id: upload-release-asset-unix
       uses: actions/upload-release-asset@v1
       env:
