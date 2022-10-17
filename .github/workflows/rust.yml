@@ -56,24 +56,26 @@ jobs:
       run: sudo apt-get update -y && sudo apt-get install libusb-1.0-0-dev
     - name: Build
       run: cargo build --verbose --release
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v3.1.0
-      with:
-        # Artifact name
-        name: litra-control-linux-win64
-        # A file, directory or wildcard pattern that describes what to upload
-        path: target/release/litra-control.exe
-        # The desired behavior if no files are found using the provided path.
-        if-no-files-found: error
-        retention-days: 90
-    - name: Upload assets
-      id: upload-release-asset
+    - name: Upload assets windows
+      if: matrix.os == 'windows-latest'
+      id: upload-release-asset-win
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ needs.release.outputs.upload_url }}
-        asset_path: checkers/build/${{ matrix.os }}.tar.gz
-        asset_name: ${{ matrix.os }}.tar.gz
-        asset_content_type: application/gzip
+        asset_path: target/release/litra-control.exe
+        asset_name: ${{ matrix.os }}.exe
+        asset_content_type: application/octet
+    - name: Upload assets
+      if: matrix.os == 'windows-latest'
+      id: upload-release-asset-unix
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: target/release/litra-control
+        asset_name: ${{ matrix.os }}
+        asset_content_type: application/octet
         
