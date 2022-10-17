@@ -151,19 +151,68 @@ Sets the temperature in Kelvin.
 # Integration with the Desktop 
 
 I already run [AutoHotKey](https://www.autohotkey.com/) to remap keys on my 
-keyboard so that is the obvious choice to control the lamp with a keystroke.
+keyboard so that is the obvious choice to control the lamp automatically or
+with a keystroke
 
-    ;; Control the Litra Glow with Win-Alt-L
+First let's create some functions to keep the state of the lamp and turn it
+on or off:
+
+    ;; Automate videolight from windows titles
     LitraState = 0
-    #!l::
-    if (LitraState = 0) {
+
+    LitraOn() {
+        global
+        OutputDebug, "Turn litra on"
         Run, "C:\Users\%A_UserName%\.local\bin\litra-control.exe" on, , Hide
         LitraState = 1
-    } else {
+    }
+
+    LitraOff() {
+        global
+        OutputDebug, "Turn litra off"
         Run, "C:\Users\%A_UserName%\.local\bin\litra-control.exe" off, , Hide
         LitraState = 0
     }
+
+I keep the state of the lamp in a variable to allow the keyboard shortcut to work as 
+a toggle. I mapped it to Win-Alt-l for easy memorization and keep it out of the way of 
+other shortcuts.
+
+    ;; Manually toggle light
+    #!l::
+    if (LitraState = 0) {
+        LitraOn()
+    } else {
+        LitraOff()
+    }
     return
+
+Now we can use these functions to turn on the lamp under certain conditions. I 
+want the lamp to turn on when I am in Google meetings which we can find out if a 
+Window is open with the title *Meet - <something>*. In only want to turn on a lamp 
+when the meeting starts and off when it closes. This requires me to keep the last
+state similarly to the manual togggling. This also reduces spamming the light and 
+allows me to override the automatic on/off with the manual key shortcut.
+
+    InMeeting = 0
+
+    OutputDebug, "Enable timer for Meetings"
+    SetTimer, CheckForMeeting, 500
+    return
+
+    CheckForMeeting:
+    MeetingWindow := WinExist("Meet - ")
+    if MeetingWindow && not InMeeting {
+        OutputDebug, "Meeting started"
+        InMeeting = 1
+        LitraOn()
+    } else if not MeetingWindow && InMeeting {
+        OutputDebug, "No meeting"
+        InMeeting = 0
+        LitraOff()
+    }
+    return
+
 
 I made it a toggle button in the *AutoHotKey* because it made most sense to me :
 when using the keyboard I expect interactivity, but when running commands I find
