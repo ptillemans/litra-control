@@ -16,7 +16,6 @@ jobs:
           - windows-latest
           - ubuntu-latest
           - macOS-latest
-    needs: release
     steps:
     - uses: actions/checkout@v3
     - name: install dependencies
