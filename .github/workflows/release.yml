@@ -8,24 +8,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    outputs: 
-      upload_url: ${{ steps.create_release.outputs.upload_url }} 
-    
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          draft: true
-          prerelease: false
-
   binaries:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -41,27 +23,14 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get update -y && sudo apt-get install libusb-1.0-0-dev
     - name: Build
-      run: cargo build --verbose --release
-    - name: Upload assets windows
-      if: matrix.os == 'windows-latest'
-      id: upload-release-asset-win
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cargo build --verbose --release
+        mv target/release/litra-control.* target/release/${{ matrix-os }}
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        upload_url: ${{ needs.release.outputs.upload_url }}
-        asset_path: target/release/litra-control.exe
-        asset_name: ${{ matrix.os }}.exe
-        asset_content_type: application/octet
-    - name: Upload assets unix
-      if: matrix.os != 'windows-latest'
-      id: upload-release-asset-unix
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.release.outputs.upload_url }}
-        asset_path: target/release/litra-control
-        asset_name: ${{ matrix.os }}
-        asset_content_type: application/octet
-        
+        files: |
+          target/release/windows-latest
+          target/release/ubuntu-latest
+          target/release/macOS-latest
