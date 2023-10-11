@@ -27,13 +27,14 @@ fn get_api() -> Result<HidApi> {
         HidApi::new().context("Creating HidApi.")
     }
 }
+
 fn send_buffer(config: &LitraConfig, buf: &mut [u8; BUF_LEN]) -> Result<()> {
     let path = config.path.clone();
     let hid_path = CString::new(path).context("Convert path for FFI call")?;
     let device = get_api()?.open_path(&hid_path)
         .context(format!("Opening connection to Litra {:?}", hid_path))?;
-    device.write(buf).context("writing buffer")
-        .map(|n| println!("Wrote {} bytes", n))
+    device.write(buf).context("writing buffer")?;
+    Ok(())
 }
 
 fn send_command(config: &LitraConfig, command: u8, argument: u16) -> Result<()> {
