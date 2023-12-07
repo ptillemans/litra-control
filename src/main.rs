@@ -24,7 +24,6 @@ fn main() -> Result<()> {
     let config: LitraConfig =
         config.try_deserialize()?;
 
-    println!("Configuration: {:?}", config);
 
     match &cli.command {
         Some(Commands::Init) => {
@@ -51,16 +50,24 @@ fn main() -> Result<()> {
             }
             Ok(())
         },
+        Some(Commands::Status) => {
+            println!("Configuration: {:?}", config);
+            Ok(())
+        },
         Some(Commands::On) => {
+            println!("Litra light on");
             light_on(&config)
         },
         Some(Commands::Off) => {
+            println!("Litra light off");
             light_off(&config)
         },
         Some(Commands::Brightness {percent}) => {
+            println!("Brightness set to {}", percent);
             set_brightness(&config, *percent)
         },
         Some(Commands::Temperature {temperature}) => {
+            println!("Temperature set to {}", temperature);
             set_temperature(&config, *temperature)
         }
         None => {

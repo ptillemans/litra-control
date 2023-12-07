@@ -30,7 +30,8 @@ pub enum Commands {
     Temperature {
         #[arg(value_name="TEMPERATURE")]
         temperature: u16
-    }
+    },
+    Status
 }
 
 
