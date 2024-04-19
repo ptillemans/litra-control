@@ -68,7 +68,7 @@ refactorings replacing the USB library multiple times I have something close to 
 To keep it simple
 
     cargo build --release
-    cp target/release/litra-command ~/.local/bin
+    cp target/release/litra-control ~/.local/bin
 
 ## Linux permissions
 
